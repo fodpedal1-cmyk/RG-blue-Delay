@@ -22,11 +22,12 @@ public:
             (float)x, (float)y, (float)w, (float)h);
 
         auto c = r.getCentre();
+
         float radius =
             juce::jmin(r.getWidth(), r.getHeight()) * 0.39f;
 
         //==========================================================
-        // KNOB SHADOW
+        // SHADOW
         //==========================================================
 
         g.setColour(
@@ -62,7 +63,7 @@ public:
             2.0f);
 
         //==========================================================
-        // METAL KNOB BODY
+        // METAL KNOB
         //==========================================================
 
         float kr = radius * 0.83f;
@@ -71,9 +72,11 @@ public:
             juce::Colour(235, 237, 238),
             c.x,
             c.y - kr,
+
             juce::Colour(52, 55, 58),
             c.x,
             c.y + kr,
+
             false);
 
         g.setGradientFill(metal);
@@ -95,7 +98,7 @@ public:
             1.5f);
 
         //==========================================================
-        // KNOB GRIP LINES
+        // KNOB GRIP
         //==========================================================
 
         g.setColour(
@@ -128,11 +131,12 @@ public:
         }
 
         //==========================================================
-        // KNOB POSITION MARKER
+        // POSITION MARKER
         //==========================================================
 
         float angle =
-            startAngle + value * (endAngle - startAngle);
+            startAngle +
+            value * (endAngle - startAngle);
 
         float marker =
             kr * 0.68f;
@@ -493,7 +497,7 @@ void RGBlueDelayAudioProcessorEditor::paint(
 
     if (!bypassed)
     {
-        // LED glow
+        // Glow
 
         g.setColour(
             juce::Colours::deepskyblue
@@ -559,7 +563,9 @@ void RGBlueDelayAudioProcessorEditor::paint(
     const float switchCX = 250.0f;
     const float switchCY = 530.0f;
 
-    // Deep shadow
+    //==============================================================
+    // DEEP SHADOW
+    //==============================================================
 
     g.setColour(
         juce::Colours::black
@@ -594,8 +600,6 @@ void RGBlueDelayAudioProcessorEditor::paint(
         switchCY - 43.0f,
         86.0f,
         86.0f);
-
-    // Washer outer edge
 
     g.setColour(
         juce::Colour(18, 20, 22));
@@ -667,36 +671,50 @@ void RGBlueDelayAudioProcessorEditor::paint(
         2.0f);
 
     //==============================================================
-    // METAL HIGHLIGHT
+    // TOP METAL HIGHLIGHT
     //==============================================================
 
-    g.setColour(
-        juce::Colours::white
-            .withAlpha(0.65f));
+    juce::Path highlightArc;
 
-    g.drawArc(
+    highlightArc.addArc(
         switchCX - 22.0f,
         switchCY - 22.0f,
         44.0f,
         44.0f,
         3.7f,
         5.6f,
-        2.5f);
-
-    // Lower reflection
+        true);
 
     g.setColour(
-        juce::Colour(255, 255, 255)
-            .withAlpha(0.12f));
+        juce::Colours::white
+            .withAlpha(0.65f));
 
-    g.drawArc(
+    g.strokePath(
+        highlightArc,
+        juce::PathStrokeType(2.5f));
+
+    //==============================================================
+    // LOWER REFLECTION
+    //==============================================================
+
+    juce::Path lowerReflection;
+
+    lowerReflection.addArc(
         switchCX - 23.0f,
         switchCY - 23.0f,
         46.0f,
         46.0f,
         0.3f,
         2.4f,
-        2.0f);
+        true);
+
+    g.setColour(
+        juce::Colours::white
+            .withAlpha(0.12f));
+
+    g.strokePath(
+        lowerReflection,
+        juce::PathStrokeType(2.0f));
 
     //==============================================================
     // CENTRE CONTACT
@@ -808,7 +826,8 @@ void RGBlueDelayAudioProcessorEditor::resized()
         130,
         25);
 
-    // Invisible clickable area for round footswitch
+    // Invisible clickable area
+    // The visual switch itself is round.
 
     footswitchButton.setBounds(
         155,
