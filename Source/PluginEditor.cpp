@@ -7,6 +7,25 @@ namespace
 class RealisticLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
+    void drawButtonBackground(
+        juce::Graphics&,
+        juce::Button&,
+        const juce::Colour&,
+        bool,
+        bool) override
+    {
+        // Completely transparent.
+        // The actual footswitch is painted in the editor.
+    }
+
+    void drawButtonText(
+        juce::Graphics&,
+        juce::TextButton&,
+        bool,
+        bool) override
+    {
+        // No text or rectangle.
+    }
     void drawRotarySlider(
         juce::Graphics& g,
         int x,
