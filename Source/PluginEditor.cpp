@@ -344,7 +344,3 @@ void RGBlueDelayAudioProcessorEditor::resized()
     footswitchButton.setBounds(
         145, 500, 210, 78);
 }
-
-Noy, buong file ito. I-replace lahat ng "PluginEditor.cpp", Commit changes, tapos Windows Actions ulit. 💚🔥
-
-Kapag green na naman, test natin ang ON → LED ON / BYPASS → LED OFF.
