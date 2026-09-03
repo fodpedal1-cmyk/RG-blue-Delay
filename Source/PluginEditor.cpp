@@ -299,10 +299,10 @@ void RGBlueDelayAudioProcessorEditor::setupKnob(
         0.001);
 
     slider.setRotaryParameters(
-    7.0f / 6.0f *
+    2.0f / 3.0f *
         juce::MathConstants<float>::pi,
 
-    11.0f / 6.0f *
+    7.0f / 3.0f *
         juce::MathConstants<float>::pi,
 
     true);
