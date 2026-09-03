@@ -26,6 +26,7 @@ public:
     {
         // No text or rectangle.
     }
+
     void drawRotarySlider(
         juce::Graphics& g,
         int x,
@@ -37,13 +38,19 @@ public:
         float endAngle,
         juce::Slider&) override
     {
-        auto r = juce::Rectangle<float>(
-            (float)x, (float)y, (float)w, (float)h);
+        auto r =
+            juce::Rectangle<float>(
+                (float)x,
+                (float)y,
+                (float)w,
+                (float)h);
 
         auto c = r.getCentre();
 
         float radius =
-            juce::jmin(r.getWidth(), r.getHeight()) * 0.39f;
+            juce::jmin(
+                r.getWidth(),
+                r.getHeight()) * 0.39f;
 
         //==========================================================
         // SHADOW
@@ -251,7 +258,7 @@ RGBlueDelayAudioProcessorEditor(
     footswitchButton.setClickingTogglesState(true);
 
     footswitchButton.setWantsKeyboardFocus(false);
-    
+
     footswitchButton.setMouseClickGrabsKeyboardFocus(false);
 
     footswitchButton.setColour(
@@ -286,6 +293,12 @@ RGBlueDelayAudioProcessorEditor(
     setSize(
         500,
         640);
+
+    //==============================================================
+    // LED SYNCHRONIZATION TIMER
+    //==============================================================
+
+    startTimerHz(30);
 }
 
 //================================================================
@@ -295,6 +308,8 @@ RGBlueDelayAudioProcessorEditor(
 RGBlueDelayAudioProcessorEditor::
 ~RGBlueDelayAudioProcessorEditor()
 {
+    stopTimer();
+
     setLookAndFeel(nullptr);
 }
 
@@ -322,13 +337,13 @@ void RGBlueDelayAudioProcessorEditor::setupKnob(
         0.001);
 
     slider.setRotaryParameters(
-    2.0f / 3.0f *
-        juce::MathConstants<float>::pi,
+        2.0f / 3.0f *
+            juce::MathConstants<float>::pi,
 
-    7.0f / 3.0f *
-        juce::MathConstants<float>::pi,
+        7.0f / 3.0f *
+            juce::MathConstants<float>::pi,
 
-    true);
+        true);
 
     slider.setLookAndFeel(
         &pedalLookAndFeel);
@@ -355,6 +370,15 @@ void RGBlueDelayAudioProcessorEditor::setupKnob(
 
     addAndMakeVisible(
         label);
+}
+
+//================================================================
+// TIMER - KEEP LED SYNCHRONIZED WITH BYPASS
+//================================================================
+
+void RGBlueDelayAudioProcessorEditor::timerCallback()
+{
+    repaint();
 }
 
 //================================================================
@@ -826,7 +850,7 @@ void RGBlueDelayAudioProcessorEditor::resized()
         130,
         25);
 
-    // Invisible clickable area
+    // Invisible clickable area.
     // The visual switch itself is round.
 
     footswitchButton.setBounds(
