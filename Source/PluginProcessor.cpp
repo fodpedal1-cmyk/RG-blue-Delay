@@ -5,104 +5,64 @@ namespace
 {
     constexpr float minDelayMs = 60.0f;
     constexpr float maxDelayMs = 634.0f;
-
     constexpr float maxFeedback = 0.92f;
 
-    // Circuit-inspired filtering
-    constexpr float inputHighPassHz = 25.0f;
-    constexpr float inputLowPassHz = 16000.0f;
-
-    // 5.1k + 22nF style feedback high-pass region
-    constexpr float feedbackHighPassHz = 70.0f;
-
-    // 2k + 47nF style darker repeat low-pass region
-    constexpr float feedbackLowPassHz = 7200.0f;
-
-    // Final output smoothing
-    constexpr float outputLowPassHz = 12000.0f;
+    constexpr float inputHP = 25.0f;
+    constexpr float inputLP = 16000.0f;
+    constexpr float feedbackHP = 70.0f;
+    constexpr float feedbackLP = 7200.0f;
+    constexpr float outputLP = 12000.0f;
 }
 
-//==============================================================
-// CONSTRUCTOR
 //==============================================================
 
 RGBlueDelayAudioProcessor::RGBlueDelayAudioProcessor()
     : AudioProcessor(
-          BusesProperties()
-              .withInput(
-                  "Input",
-                  juce::AudioChannelSet::stereo(),
-                  true)
-              .withOutput(
-                  "Output",
-                  juce::AudioChannelSet::stereo(),
-                  true)),
-      parameters(
-          *this,
-          nullptr,
-          "PARAMETERS",
-          createParameterLayout())
+        BusesProperties()
+        .withInput("Input",
+                   juce::AudioChannelSet::stereo(), true)
+        .withOutput("Output",
+                    juce::AudioChannelSet::stereo(), true)),
+      parameters(*this, nullptr, "PARAMETERS",
+                 createParameterLayout())
 {
 }
-
-//==============================================================
-// DESTRUCTOR
-//==============================================================
 
 RGBlueDelayAudioProcessor::~RGBlueDelayAudioProcessor()
 {
 }
 
 //==============================================================
-// PARAMETERS
-//==============================================================
 
 juce::AudioProcessorValueTreeState::ParameterLayout
 RGBlueDelayAudioProcessor::createParameterLayout()
 {
-    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+    std::vector<std::unique_ptr<juce::RangedAudioParameter>> p;
 
-    params.push_back(
-        std::make_unique<juce::AudioParameterFloat>(
-            "DELAY",
-            "Delay",
-            juce::NormalisableRange<float>(
-                minDelayMs,
-                maxDelayMs,
-                0.1f),
-            300.0f));
+    p.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "DELAY", "Delay",
+        juce::NormalisableRange<float>(
+            minDelayMs, maxDelayMs, 0.1f),
+        300.0f));
 
-    params.push_back(
-        std::make_unique<juce::AudioParameterFloat>(
-            "REPEAT",
-            "Repeat",
-            juce::NormalisableRange<float>(
-                0.0f,
-                maxFeedback,
-                0.001f),
-            0.45f));
+    p.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "REPEAT", "Repeat",
+        juce::NormalisableRange<float>(
+            0.0f, maxFeedback, 0.001f),
+        0.45f));
 
-    params.push_back(
-        std::make_unique<juce::AudioParameterFloat>(
-            "MIX",
-            "Mix",
-            juce::NormalisableRange<float>(
-                0.0f,
-                1.0f,
-                0.001f),
-            0.32f));
+    p.push_back(std::make_unique<juce::AudioParameterFloat>(
+        "MIX", "Mix",
+        juce::NormalisableRange<float>(
+            0.0f, 1.0f, 0.001f),
+        0.32f));
 
-    params.push_back(
-        std::make_unique<juce::AudioParameterBool>(
-            "BYPASS",
-            "Bypass",
-            false));
+    p.push_back(std::make_unique<juce::AudioParameterBool>(
+        "BYPASS", "Bypass", false));
 
-    return { params.begin(), params.end() };
+    return { p.begin(), p.end() };
 }
 
-//==============================================================
-// PREPARE
 //==============================================================
 
 void RGBlueDelayAudioProcessor::prepareToPlay(
@@ -113,57 +73,302 @@ void RGBlueDelayAudioProcessor::prepareToPlay(
 
     currentSampleRate = sampleRate;
 
-    const int maximumDelaySamples =
-        static_cast<int>(
-            std::ceil(
-                sampleRate *
-                (maxDelayMs / 1000.0)));
-
     delayBufferSize =
-        maximumDelaySamples + 4;
+        static_cast<int>(
+            std::ceil(sampleRate *
+                      (maxDelayMs / 1000.0))) + 4;
 
     delayBuffer.setSize(
         getTotalNumOutputChannels(),
         delayBufferSize);
 
     delayBuffer.clear();
-
     writePosition = 0;
 
-    const float initialDelay =
-        parameters
-            .getRawParameterValue("DELAY")
-            ->load();
+    delaySmoothed.reset(sampleRate, 0.025);
+    feedbackSmoothed.reset(sampleRate, 0.025);
+    mixSmoothed.reset(sampleRate, 0.025);
+    bypassSmoothed.reset(sampleRate, 0.010);
 
-    const float initialFeedback =
-        parameters
-            .getRawParameterValue("REPEAT")
-            ->load();
+    delaySmoothed.setCurrentAndTargetValue(
+        parameters.getRawParameterValue("DELAY")->load());
 
-    const float initialMix =
-        parameters
-            .getRawParameterValue("MIX")
-            ->load();
+    feedbackSmoothed.setCurrentAndTargetValue(
+        parameters.getRawParameterValue("REPEAT")->load());
 
-    const float initialBypass =
-        parameters
-            .getRawParameterValue("BYPASS")
-            ->load();
+    mixSmoothed.setCurrentAndTargetValue(
+        parameters.getRawParameterValue("MIX")->load());
 
-    delaySmoothed.reset(
-        sampleRate,
-        0.025);
+    bypassSmoothed.setCurrentAndTargetValue(
+        parameters.getRawParameterValue("BYPASS")->load());
 
-    feedbackSmoothed.reset(
-        sampleRate,
-        0.025);
+    updateFilters();
+}
 
-    mixSmoothed.reset(
-        sampleRate,
-        0.025);
+//==============================================================
 
-    bypassSmoothed.reset(
-        sampleRate,
-        0.010);
+void RGBlueDelayAudioProcessor::releaseResources()
+{
+    delayBuffer.setSize(0, 0);
+}
 
-    // JUCE 8
+//==============================================================
+
+bool RGBlueDelayAudioProcessor::isBusesLayoutSupported(
+    const BusesLayout& layouts) const
+{
+    return layouts.getMainInputChannelSet()
+               == juce::AudioChannelSet::stereo()
+        && layouts.getMainOutputChannelSet()
+               == juce::AudioChannelSet::stereo();
+}
+
+//==============================================================
+
+void RGBlueDelayAudioProcessor::updateFilters()
+{
+    inputHighPass.coefficients =
+        juce::dsp::IIR::Coefficients<float>::makeHighPass(
+            currentSampleRate, inputHP);
+
+    inputLowPass.coefficients =
+        juce::dsp::IIR::Coefficients<float>::makeLowPass(
+            currentSampleRate, inputLP);
+
+    feedbackHighPass.coefficients =
+        juce::dsp::IIR::Coefficients<float>::makeHighPass(
+            currentSampleRate, feedbackHP);
+
+    feedbackLowPass.coefficients =
+        juce::dsp::IIR::Coefficients<float>::makeLowPass(
+            currentSampleRate, feedbackLP);
+
+    outputLowPass.coefficients =
+        juce::dsp::IIR::Coefficients<float>::makeLowPass(
+            currentSampleRate, outputLP);
+}
+
+//==============================================================
+
+float RGBlueDelayAudioProcessor::readDelaySample(
+    int channel,
+    float delaySamples) const
+{
+    float position =
+        static_cast<float>(writePosition) - delaySamples;
+
+    while (position < 0.0f)
+        position += static_cast<float>(delayBufferSize);
+
+    while (position >= static_cast<float>(delayBufferSize))
+        position -= static_cast<float>(delayBufferSize);
+
+    const int a = static_cast<int>(position);
+    const int b = (a + 1) % delayBufferSize;
+    const float f = position - static_cast<float>(a);
+
+    const float sa = delayBuffer.getSample(channel, a);
+    const float sb = delayBuffer.getSample(channel, b);
+
+    return sa + f * (sb - sa);
+}
+
+//==============================================================
+
+void RGBlueDelayAudioProcessor::processBlock(
+    juce::AudioBuffer<float>& buffer,
+    juce::MidiBuffer& midi)
+{
+    juce::ignoreUnused(midi);
+
+    const int numSamples = buffer.getNumSamples();
+    const int numChannels = buffer.getNumChannels();
+
+    delaySmoothed.setTargetValue(
+        parameters.getRawParameterValue("DELAY")->load());
+
+    feedbackSmoothed.setTargetValue(
+        parameters.getRawParameterValue("REPEAT")->load());
+
+    mixSmoothed.setTargetValue(
+        parameters.getRawParameterValue("MIX")->load());
+
+    bypassSmoothed.setTargetValue(
+        parameters.getRawParameterValue("BYPASS")->load());
+
+    for (int s = 0; s < numSamples; ++s)
+    {
+        const float delayMs =
+            delaySmoothed.getNextValue();
+
+        const float feedback =
+            feedbackSmoothed.getNextValue();
+
+        const float mix =
+            mixSmoothed.getNextValue();
+
+        const float bypass =
+            bypassSmoothed.getNextValue();
+
+        const float delaySamples =
+            delayMs *
+            static_cast<float>(
+                currentSampleRate / 1000.0);
+
+        for (int ch = 0; ch < numChannels; ++ch)
+        {
+            const float dry =
+                buffer.getSample(ch, s);
+
+            float input =
+                inputHighPass.processSample(dry);
+
+            input =
+                inputLowPass.processSample(input);
+
+            const float delayed =
+                readDelaySample(ch, delaySamples);
+
+            float repeat =
+                feedbackHighPass.processSample(delayed);
+
+            repeat =
+                feedbackLowPass.processSample(repeat);
+
+            repeat =
+                std::tanh(repeat * 1.35f);
+
+            delayBuffer.setSample(
+                ch,
+                writePosition,
+                input + repeat * feedback);
+
+            float output =
+                dry * (1.0f - mix)
+                + delayed * mix;
+
+            output =
+                outputLowPass.processSample(output);
+
+            const float finalSample =
+                output * (1.0f - bypass)
+                + dry * bypass;
+
+            buffer.setSample(ch, s, finalSample);
+        }
+
+        ++writePosition;
+
+        if (writePosition >= delayBufferSize)
+            writePosition = 0;
+    }
+}
+
+//==============================================================
+
+bool RGBlueDelayAudioProcessor::hasEditor() const
+{
+    return true;
+}
+
+juce::AudioProcessorEditor*
+RGBlueDelayAudioProcessor::createEditor()
+{
+    return new RGBlueDelayAudioProcessorEditor(*this);
+}
+
+//==============================================================
+
+const juce::String
+RGBlueDelayAudioProcessor::getName() const
+{
+    return "RG Blue Delay";
+}
+
+bool RGBlueDelayAudioProcessor::acceptsMidi() const
+{
+    return false;
+}
+
+bool RGBlueDelayAudioProcessor::producesMidi() const
+{
+    return false;
+}
+
+bool RGBlueDelayAudioProcessor::isMidiEffect() const
+{
+    return false;
+}
+
+double RGBlueDelayAudioProcessor::getTailLengthSeconds() const
+{
+    return maxDelayMs / 1000.0;
+}
+
+//==============================================================
+
+int RGBlueDelayAudioProcessor::getNumPrograms()
+{
+    return 1;
+}
+
+int RGBlueDelayAudioProcessor::getCurrentProgram()
+{
+    return 0;
+}
+
+void RGBlueDelayAudioProcessor::setCurrentProgram(int index)
+{
+    juce::ignoreUnused(index);
+}
+
+const juce::String
+RGBlueDelayAudioProcessor::getProgramName(int index)
+{
+    juce::ignoreUnused(index);
+    return {};
+}
+
+void RGBlueDelayAudioProcessor::changeProgramName(
+    int index,
+    const juce::String& name)
+{
+    juce::ignoreUnused(index, name);
+}
+
+//==============================================================
+
+void RGBlueDelayAudioProcessor::getStateInformation(
+    juce::MemoryBlock& destData)
+{
+    auto state = parameters.copyState();
+    std::unique_ptr<juce::XmlElement> xml =
+        state.createXml();
+
+    copyXmlToBinary(*xml, destData);
+}
+
+//==============================================================
+
+void RGBlueDelayAudioProcessor::setStateInformation(
+    const void* data,
+    int sizeInBytes)
+{
+    std::unique_ptr<juce::XmlElement> xml =
+        getXmlFromBinary(data, sizeInBytes);
+
+    if (xml != nullptr &&
+        xml->hasTagName(parameters.state.getType()))
+    {
+        parameters.replaceState(
+            juce::ValueTree::fromXml(*xml));
+    }
+}
+
+//==============================================================
+
+juce::AudioProcessor*
+JUCE_CALLTYPE createPluginFilter()
+{
+    return new RGBlueDelayAudioProcessor();
+}
