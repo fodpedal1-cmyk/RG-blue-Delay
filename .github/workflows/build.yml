@@ -1,0 +1,57 @@
+name: Build RG Blue Delay
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libcurl4-openssl-dev \
+            libfreetype6-dev \
+            libgl1-mesa-dev \
+            libjack-jackd2-dev \
+            libx11-dev \
+            libxcomposite-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libwebkit2gtk-4.1-dev
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build VST3
+        run: |
+          cmake --build build \
+            --config Release \
+            --parallel 2
+
+      - name: Package VST3
+        run: |
+          mkdir -p artifacts
+          find build -type d -name "*.vst3" -exec cp -R {} artifacts/ \;
+
+      - name: Upload VST3
+        uses: actions/upload-artifact@v4
+        with:
+          name: RG-Blue-Delay-VST3
+          path: artifacts/
+          if-no-files-found: error
