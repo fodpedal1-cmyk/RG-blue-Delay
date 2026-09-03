@@ -302,7 +302,7 @@ void RGBlueDelayAudioProcessorEditor::setupKnob(
     7.0f / 6.0f *
         juce::MathConstants<float>::pi,
 
-    17.0f / 6.0f *
+    11.0f / 6.0f *
         juce::MathConstants<float>::pi,
 
     true);
