@@ -251,6 +251,7 @@ RGBlueDelayAudioProcessorEditor(
     footswitchButton.setClickingTogglesState(true);
 
 footswitchButton.setWantsKeyboardFocus(false);
+    
 footswitchButton.setMouseClickGrabsKeyboardFocus(false);
 
     footswitchButton.setColour(
