@@ -761,29 +761,6 @@ void RGBlueDelayAudioProcessorEditor::paint(
         5.0f);
 
     //==============================================================
-    // STATUS
-    //==============================================================
-
-    g.setColour(
-        juce::Colours::white);
-
-    g.setFont(
-        juce::Font(
-            juce::FontOptions()
-                .withHeight(13.0f)
-                .withStyle("bold")));
-
-    g.drawFittedText(
-        bypassed ? "BYPASS" : "ON",
-        juce::Rectangle<int>(
-            350,
-            510,
-            80,
-            25),
-        juce::Justification::centred,
-        1);
-
-    //==============================================================
     // FOOTER
     //==============================================================
 
