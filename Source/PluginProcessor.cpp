@@ -1,16 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================
-// RG BLUE DELAY
-// Component-inspired PT2399 / Deep Blue style delay
-// Controls:
-// DELAY  = 60 - 634 ms
-// REPEAT = feedback
-// MIX    = wet/dry
-// BYPASS = footswitch
-//==============================================================
-
 namespace
 {
     constexpr float minDelayMs = 60.0f;
@@ -18,21 +8,18 @@ namespace
 
     constexpr float maxFeedback = 0.92f;
 
-    // Component-inspired filter targets.
-    //
-    // These are DSP equivalents of the important audio-path
-    // resistor/capacitor networks used in the reference circuit.
-    //
-    // 5.1k + 22nF  -> approximately 1.42 kHz
-    // 2k  + 47nF  -> approximately 1.69 kHz
-    //
-    // The delay repeats therefore become progressively darker.
-
-    constexpr float feedbackHighPassHz = 70.0f;
-    constexpr float feedbackLowPassHz  = 7200.0f;
-
+    // Circuit-inspired filtering
     constexpr float inputHighPassHz = 25.0f;
-    constexpr float inputLowPassHz  = 16000.0f;
+    constexpr float inputLowPassHz = 16000.0f;
+
+    // 5.1k + 22nF style feedback high-pass region
+    constexpr float feedbackHighPassHz = 70.0f;
+
+    // 2k + 47nF style darker repeat low-pass region
+    constexpr float feedbackLowPassHz = 7200.0f;
+
+    // Final output smoothing
+    constexpr float outputLowPassHz = 12000.0f;
 }
 
 //==============================================================
@@ -40,19 +27,16 @@ namespace
 //==============================================================
 
 RGBlueDelayAudioProcessor::RGBlueDelayAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
     : AudioProcessor(
-        BusesProperties()
-            .withInput(
-                "Input",
-                juce::AudioChannelSet::stereo(),
-                true)
-            .withOutput(
-                "Output",
-                juce::AudioChannelSet::stereo(),
-                true)),
-#endif
-
+          BusesProperties()
+              .withInput(
+                  "Input",
+                  juce::AudioChannelSet::stereo(),
+                  true)
+              .withOutput(
+                  "Output",
+                  juce::AudioChannelSet::stereo(),
+                  true)),
       parameters(
           *this,
           nullptr,
@@ -70,7 +54,7 @@ RGBlueDelayAudioProcessor::~RGBlueDelayAudioProcessor()
 }
 
 //==============================================================
-// PARAMETER LAYOUT
+// PARAMETERS
 //==============================================================
 
 juce::AudioProcessorValueTreeState::ParameterLayout
@@ -85,7 +69,7 @@ RGBlueDelayAudioProcessor::createParameterLayout()
             juce::NormalisableRange<float>(
                 minDelayMs,
                 maxDelayMs,
-                0.01f),
+                0.1f),
             300.0f));
 
     params.push_back(
@@ -118,53 +102,68 @@ RGBlueDelayAudioProcessor::createParameterLayout()
 }
 
 //==============================================================
-// PREPARE TO PLAY
+// PREPARE
 //==============================================================
 
 void RGBlueDelayAudioProcessor::prepareToPlay(
     double sampleRate,
     int samplesPerBlock)
 {
+    juce::ignoreUnused(samplesPerBlock);
+
     currentSampleRate = sampleRate;
 
-    //==========================================================
-    // Delay memory
-    //==========================================================
-
-    const auto maximumDelaySamples =
+    const int maximumDelaySamples =
         static_cast<int>(
             std::ceil(
-                (maxDelayMs / 1000.0f)
-                * static_cast<float>(sampleRate)))
-        + samplesPerBlock
-        + 8;
+                sampleRate *
+                (maxDelayMs / 1000.0)));
 
     delayBufferSize =
-        juce::jmax(
-            maximumDelaySamples,
-            32);
+        maximumDelaySamples + 4;
 
     delayBuffer.setSize(
-        2,
+        getTotalNumOutputChannels(),
         delayBufferSize);
 
     delayBuffer.clear();
 
     writePosition = 0;
 
-    currentDelaySamples =
-        static_cast<float>(
-            300.0
-            / 1000.0
-            * sampleRate);
+    const float initialDelay =
+        parameters
+            .getRawParameterValue("DELAY")
+            ->load();
 
-    //==========================================================
-    // Parameter smoothing
-    //==========================================================
+    const float initialFeedback =
+        parameters
+            .getRawParameterValue("REPEAT")
+            ->load();
 
-    delaySmoothed.reset(sampleRate, 0.025);
-    feedbackSmoothed.reset(sampleRate, 0.025);
-    mixSmoothed.reset(sampleRate, 0.025);
-    bypassSmoothed.reset(sampleRate, 0.010);
+    const float initialMix =
+        parameters
+            .getRawParameterValue("MIX")
+            ->load();
 
-    delaySmoothed.setCurrent
+    const float initialBypass =
+        parameters
+            .getRawParameterValue("BYPASS")
+            ->load();
+
+    delaySmoothed.reset(
+        sampleRate,
+        0.025);
+
+    feedbackSmoothed.reset(
+        sampleRate,
+        0.025);
+
+    mixSmoothed.reset(
+        sampleRate,
+        0.025);
+
+    bypassSmoothed.reset(
+        sampleRate,
+        0.010);
+
+    // JUCE 8
