@@ -1,4 +1,4 @@
-name: Build RG Blue Delay
+name: Build RG Blue Delay Windows VST3
 
 on:
   push:
@@ -8,50 +8,34 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libasound2-dev \
-            libcurl4-openssl-dev \
-            libfreetype6-dev \
-            libgl1-mesa-dev \
-            libjack-jackd2-dev \
-            libx11-dev \
-            libxcomposite-dev \
-            libxcursor-dev \
-            libxext-dev \
-            libxinerama-dev \
-            libxrandr-dev \
-            libwebkit2gtk-4.1-dev
 
       - name: Configure CMake
         run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -A x64
 
-      - name: Build VST3
+      - name: Build Windows VST3
         run: |
-          cmake --build build \
-            --config Release \
-            --parallel 2
+          cmake --build build --config Release --parallel 2
 
       - name: Package VST3
+        shell: pwsh
         run: |
-          mkdir -p artifacts
-          find build -type d -name "*.vst3" -exec cp -R {} artifacts/ \;
+          New-Item -ItemType Directory -Force -Path artifacts
 
-      - name: Upload VST3
+          Get-ChildItem -Path build -Recurse -Directory |
+            Where-Object { $_.Name -like "*.vst3" } |
+            ForEach-Object {
+              Copy-Item $_.FullName "artifacts\$($_.Name)" -Recurse -Force
+            }
+
+      - name: Upload Windows VST3
         uses: actions/upload-artifact@v4
         with:
-          name: RG-Blue-Delay-VST3
+          name: RG-Blue-Delay-Windows-VST3
           path: artifacts/
           if-no-files-found: error
