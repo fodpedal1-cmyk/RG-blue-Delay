@@ -299,13 +299,13 @@ void RGBlueDelayAudioProcessorEditor::setupKnob(
         0.001);
 
     slider.setRotaryParameters(
-        1.25f *
-            juce::MathConstants<float>::pi,
+    7.0f / 6.0f *
+        juce::MathConstants<float>::pi,
 
-        2.75f *
-            juce::MathConstants<float>::pi,
+    17.0f / 6.0f *
+        juce::MathConstants<float>::pi,
 
-        true);
+    true);
 
     slider.setLookAndFeel(
         &pedalLookAndFeel);
