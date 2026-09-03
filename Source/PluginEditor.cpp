@@ -22,25 +22,38 @@ public:
             (float)x, (float)y, (float)w, (float)h);
 
         auto c = r.getCentre();
-        float radius = juce::jmin(r.getWidth(), r.getHeight()) * 0.39f;
+        float radius =
+            juce::jmin(r.getWidth(), r.getHeight()) * 0.39f;
 
-        // Shadow
-        g.setColour(juce::Colours::black.withAlpha(0.65f));
+        //==========================================================
+        // KNOB SHADOW
+        //==========================================================
+
+        g.setColour(
+            juce::Colours::black.withAlpha(0.65f));
+
         g.fillEllipse(
             c.x - radius + 4.0f,
             c.y - radius + 6.0f,
             radius * 2.0f,
             radius * 2.0f);
 
-        // Outer metal ring
-        g.setColour(juce::Colour(22, 24, 26));
+        //==========================================================
+        // OUTER METAL RING
+        //==========================================================
+
+        g.setColour(
+            juce::Colour(22, 24, 26));
+
         g.fillEllipse(
             c.x - radius,
             c.y - radius,
             radius * 2.0f,
             radius * 2.0f);
 
-        g.setColour(juce::Colour(135, 139, 142));
+        g.setColour(
+            juce::Colour(135, 139, 142));
+
         g.drawEllipse(
             c.x - radius,
             c.y - radius,
@@ -48,7 +61,10 @@ public:
             radius * 2.0f,
             2.0f);
 
-        // Metallic knob
+        //==========================================================
+        // METAL KNOB BODY
+        //==========================================================
+
         float kr = radius * 0.83f;
 
         juce::ColourGradient metal(
@@ -61,13 +77,16 @@ public:
             false);
 
         g.setGradientFill(metal);
+
         g.fillEllipse(
             c.x - kr,
             c.y - kr,
             kr * 2.0f,
             kr * 2.0f);
 
-        g.setColour(juce::Colour(205, 208, 210));
+        g.setColour(
+            juce::Colour(205, 208, 210));
+
         g.drawEllipse(
             c.x - kr,
             c.y - kr,
@@ -75,27 +94,48 @@ public:
             kr * 2.0f,
             1.5f);
 
-        // Knob grip lines
-        g.setColour(juce::Colours::black.withAlpha(0.35f));
+        //==========================================================
+        // KNOB GRIP LINES
+        //==========================================================
+
+        g.setColour(
+            juce::Colours::black.withAlpha(0.35f));
 
         for (int i = 0; i < 24; ++i)
         {
-            float a = juce::MathConstants<float>::twoPi
-                    * (float)i / 24.0f;
+            float a =
+                juce::MathConstants<float>::twoPi
+                * (float)i / 24.0f;
 
-            float x1 = c.x + std::cos(a) * kr * 0.88f;
-            float y1 = c.y + std::sin(a) * kr * 0.88f;
-            float x2 = c.x + std::cos(a) * kr * 0.97f;
-            float y2 = c.y + std::sin(a) * kr * 0.97f;
+            float x1 =
+                c.x + std::cos(a) * kr * 0.88f;
 
-            g.drawLine(x1, y1, x2, y2, 1.0f);
+            float y1 =
+                c.y + std::sin(a) * kr * 0.88f;
+
+            float x2 =
+                c.x + std::cos(a) * kr * 0.97f;
+
+            float y2 =
+                c.y + std::sin(a) * kr * 0.97f;
+
+            g.drawLine(
+                x1,
+                y1,
+                x2,
+                y2,
+                1.0f);
         }
 
-        // Position marker
+        //==========================================================
+        // KNOB POSITION MARKER
+        //==========================================================
+
         float angle =
             startAngle + value * (endAngle - startAngle);
 
-        float marker = kr * 0.68f;
+        float marker =
+            kr * 0.68f;
 
         float mx =
             c.x + std::cos(angle) * marker;
@@ -103,7 +143,9 @@ public:
         float my =
             c.y + std::sin(angle) * marker;
 
-        g.setColour(juce::Colours::white);
+        g.setColour(
+            juce::Colours::white);
+
         g.drawLine(
             c.x,
             c.y,
@@ -111,8 +153,13 @@ public:
             my,
             3.5f);
 
-        // Centre cap
-        g.setColour(juce::Colour(30, 32, 34));
+        //==========================================================
+        // CENTRE CAP
+        //==========================================================
+
+        g.setColour(
+            juce::Colour(30, 32, 34));
+
         g.fillEllipse(
             c.x - 7.0f,
             c.y - 7.0f,
@@ -124,15 +171,34 @@ public:
 RealisticLookAndFeel pedalLookAndFeel;
 }
 
+//================================================================
+// CONSTRUCTOR
+//================================================================
+
 RGBlueDelayAudioProcessorEditor::
 RGBlueDelayAudioProcessorEditor(
     RGBlueDelayAudioProcessor& p)
     : AudioProcessorEditor(&p),
       audioProcessor(p)
 {
-    setupKnob(delaySlider, delayLabel, "DELAY");
-    setupKnob(repeatSlider, repeatLabel, "REPEAT");
-    setupKnob(mixSlider, mixLabel, "MIX");
+    setupKnob(
+        delaySlider,
+        delayLabel,
+        "DELAY");
+
+    setupKnob(
+        repeatSlider,
+        repeatLabel,
+        "REPEAT");
+
+    setupKnob(
+        mixSlider,
+        mixLabel,
+        "MIX");
+
+    //==============================================================
+    // PARAMETER ATTACHMENTS
+    //==============================================================
 
     delayAttachment =
         std::make_unique<
@@ -155,6 +221,10 @@ RGBlueDelayAudioProcessorEditor(
                 "MIX",
                 mixSlider);
 
+    //==============================================================
+    // FOOTSWITCH
+    //==============================================================
+
     footswitchButton.setClickingTogglesState(true);
 
     footswitchButton.setColour(
@@ -173,7 +243,8 @@ RGBlueDelayAudioProcessorEditor(
         juce::TextButton::textColourOnId,
         juce::Colours::transparentBlack);
 
-    addAndMakeVisible(footswitchButton);
+    addAndMakeVisible(
+        footswitchButton);
 
     bypassAttachment =
         std::make_unique<
@@ -182,16 +253,27 @@ RGBlueDelayAudioProcessorEditor(
                 "BYPASS",
                 footswitchButton);
 
-    setLookAndFeel(&pedalLookAndFeel);
+    setLookAndFeel(
+        &pedalLookAndFeel);
 
-    setSize(500, 640);
+    setSize(
+        500,
+        640);
 }
+
+//================================================================
+// DESTRUCTOR
+//================================================================
 
 RGBlueDelayAudioProcessorEditor::
 ~RGBlueDelayAudioProcessorEditor()
 {
     setLookAndFeel(nullptr);
 }
+
+//================================================================
+// SETUP KNOB
+//================================================================
 
 void RGBlueDelayAudioProcessorEditor::setupKnob(
     juce::Slider& slider,
@@ -207,16 +289,25 @@ void RGBlueDelayAudioProcessorEditor::setupKnob(
         0,
         0);
 
-    slider.setRange(0.0, 1.0, 0.001);
+    slider.setRange(
+        0.0,
+        1.0,
+        0.001);
 
     slider.setRotaryParameters(
-        1.25f * juce::MathConstants<float>::pi,
-        2.75f * juce::MathConstants<float>::pi,
+        1.25f *
+            juce::MathConstants<float>::pi,
+
+        2.75f *
+            juce::MathConstants<float>::pi,
+
         true);
 
-    slider.setLookAndFeel(&pedalLookAndFeel);
+    slider.setLookAndFeel(
+        &pedalLookAndFeel);
 
-    addAndMakeVisible(slider);
+    addAndMakeVisible(
+        slider);
 
     label.setText(
         text,
@@ -235,22 +326,33 @@ void RGBlueDelayAudioProcessorEditor::setupKnob(
                 .withHeight(15.0f)
                 .withStyle("bold")));
 
-    addAndMakeVisible(label);
+    addAndMakeVisible(
+        label);
 }
+
+//================================================================
+// PAINT
+//================================================================
 
 void RGBlueDelayAudioProcessorEditor::paint(
     juce::Graphics& g)
 {
-    auto b = getLocalBounds().toFloat();
+    auto b =
+        getLocalBounds().toFloat();
 
-    // 125B metal enclosure
+    //==============================================================
+    // 125B METAL ENCLOSURE
+    //==============================================================
+
     juce::ColourGradient body(
         juce::Colour(32, 44, 55),
         0.0f,
         0.0f,
+
         juce::Colour(8, 13, 18),
         500.0f,
         640.0f,
+
         false);
 
     g.setGradientFill(body);
@@ -259,27 +361,54 @@ void RGBlueDelayAudioProcessorEditor::paint(
         b.reduced(7.0f),
         18.0f);
 
-    // Metallic rim
-    g.setColour(juce::Colour(125, 130, 134));
+    //==============================================================
+    // METALLIC RIM
+    //==============================================================
+
+    g.setColour(
+        juce::Colour(125, 130, 134));
+
     g.drawRoundedRectangle(
         b.reduced(7.0f),
         18.0f,
         2.0f);
 
-    // Inner rim
-    g.setColour(juce::Colour(12, 16, 20));
+    //==============================================================
+    // INNER RIM
+    //==============================================================
+
+    g.setColour(
+        juce::Colour(12, 16, 20));
+
     g.drawRoundedRectangle(
         b.reduced(13.0f),
         14.0f,
         1.0f);
 
-    // Corner screws
-    const float sx[] = {27.0f, 473.0f, 27.0f, 473.0f};
-    const float sy[] = {27.0f, 27.0f, 613.0f, 613.0f};
+    //==============================================================
+    // CORNER SCREWS
+    //==============================================================
+
+    const float sx[] =
+    {
+        27.0f,
+        473.0f,
+        27.0f,
+        473.0f
+    };
+
+    const float sy[] =
+    {
+        27.0f,
+        27.0f,
+        613.0f,
+        613.0f
+    };
 
     for (int i = 0; i < 4; ++i)
     {
-        g.setColour(juce::Colour(165, 168, 170));
+        g.setColour(
+            juce::Colour(165, 168, 170));
 
         g.fillEllipse(
             sx[i] - 5.0f,
@@ -287,7 +416,8 @@ void RGBlueDelayAudioProcessorEditor::paint(
             10.0f,
             10.0f);
 
-        g.setColour(juce::Colour(55, 58, 60));
+        g.setColour(
+            juce::Colour(55, 58, 60));
 
         g.drawLine(
             sx[i] - 3.0f,
@@ -297,8 +427,12 @@ void RGBlueDelayAudioProcessorEditor::paint(
             1.2f);
     }
 
-    // Brand
-    g.setColour(juce::Colours::white);
+    //==============================================================
+    // BRAND
+    //==============================================================
+
+    g.setColour(
+        juce::Colours::white);
 
     g.setFont(
         juce::Font(
@@ -308,11 +442,16 @@ void RGBlueDelayAudioProcessorEditor::paint(
 
     g.drawFittedText(
         "RG BLUE DELAY",
-        juce::Rectangle<int>(50, 32, 400, 35),
+        juce::Rectangle<int>(
+            50,
+            32,
+            400,
+            35),
         juce::Justification::centred,
         1);
 
-    g.setColour(juce::Colour(170, 190, 205));
+    g.setColour(
+        juce::Colour(170, 190, 205));
 
     g.setFont(
         juce::Font(
@@ -321,12 +460,20 @@ void RGBlueDelayAudioProcessorEditor::paint(
 
     g.drawFittedText(
         "ANALOG STYLE DELAY",
-        juce::Rectangle<int>(50, 67, 400, 20),
+        juce::Rectangle<int>(
+            50,
+            67,
+            400,
+            20),
         juce::Justification::centred,
         1);
 
-    // Top divider
-    g.setColour(juce::Colour(100, 110, 118));
+    //==============================================================
+    // TOP DIVIDER
+    //==============================================================
+
+    g.setColour(
+        juce::Colour(100, 110, 118));
 
     g.drawLine(
         45.0f,
@@ -335,7 +482,10 @@ void RGBlueDelayAudioProcessorEditor::paint(
         96.0f,
         1.0f);
 
+    //==============================================================
     // LED
+    //==============================================================
+
     bool bypassed =
         audioProcessor.parameters
             .getRawParameterValue("BYPASS")
@@ -343,14 +493,19 @@ void RGBlueDelayAudioProcessorEditor::paint(
 
     if (!bypassed)
     {
+        // LED glow
+
         g.setColour(
-            juce::Colours::deepskyblue.withAlpha(0.20f));
+            juce::Colours::deepskyblue
+                .withAlpha(0.20f));
 
         g.fillEllipse(
             69.0f,
             485.0f,
             54.0f,
             54.0f);
+
+        // LED body
 
         g.setColour(
             juce::Colours::deepskyblue);
@@ -360,76 +515,217 @@ void RGBlueDelayAudioProcessorEditor::paint(
             500.0f,
             24.0f,
             24.0f);
+
+        // LED highlight
+
+        g.setColour(
+            juce::Colours::white
+                .withAlpha(0.65f));
+
+        g.fillEllipse(
+            89.0f,
+            504.0f,
+            7.0f,
+            7.0f);
     }
     else
     {
-        g.setColour(juce::Colour(30, 32, 34));
+        // LED OFF
+
+        g.setColour(
+            juce::Colour(30, 32, 34));
 
         g.fillEllipse(
             84.0f,
             500.0f,
             24.0f,
             24.0f);
+
+        g.setColour(
+            juce::Colour(70, 72, 74));
+
+        g.drawEllipse(
+            84.0f,
+            500.0f,
+            24.0f,
+            24.0f,
+            1.0f);
     }
 
-    // Footswitch plate
-    g.setColour(juce::Colour(10, 11, 12));
+    //==============================================================
+    // ROUND REALISTIC 3PDT FOOTSWITCH
+    //==============================================================
 
-    g.fillRoundedRectangle(
-        155.0f,
-        480.0f,
-        190.0f,
-        105.0f,
-        13.0f);
+    const float switchCX = 250.0f;
+    const float switchCY = 530.0f;
 
-    g.setColour(juce::Colour(105, 108, 110));
+    // Deep shadow
 
-    g.drawRoundedRectangle(
-        155.0f,
-        480.0f,
-        190.0f,
-        105.0f,
-        13.0f,
-        2.0f);
+    g.setColour(
+        juce::Colours::black
+            .withAlpha(0.80f));
 
-    // Realistic switch cap
-    juce::ColourGradient switchMetal(
-        juce::Colour(220, 222, 223),
-        250.0f,
-        500.0f,
-        juce::Colour(75, 78, 80),
-        250.0f,
-        560.0f,
+    g.fillEllipse(
+        switchCX - 48.0f,
+        switchCY - 44.0f,
+        96.0f,
+        88.0f);
+
+    //==============================================================
+    // OUTER METAL WASHER
+    //==============================================================
+
+    juce::ColourGradient washerMetal(
+        juce::Colour(230, 232, 233),
+        switchCX,
+        switchCY - 43.0f,
+
+        juce::Colour(48, 51, 53),
+        switchCX,
+        switchCY + 43.0f,
+
         false);
 
-    g.setGradientFill(switchMetal);
+    g.setGradientFill(
+        washerMetal);
 
-    g.fillRoundedRectangle(
-        204.0f,
-        500.0f,
-        92.0f,
-        62.0f,
-        9.0f);
+    g.fillEllipse(
+        switchCX - 43.0f,
+        switchCY - 43.0f,
+        86.0f,
+        86.0f);
 
-    g.setColour(juce::Colour(25, 27, 29));
+    // Washer outer edge
 
-    g.drawRoundedRectangle(
-        204.0f,
-        500.0f,
-        92.0f,
-        62.0f,
-        9.0f,
+    g.setColour(
+        juce::Colour(18, 20, 22));
+
+    g.drawEllipse(
+        switchCX - 43.0f,
+        switchCY - 43.0f,
+        86.0f,
+        86.0f,
+        2.5f);
+
+    //==============================================================
+    // INNER BLACK MOUNTING RING
+    //==============================================================
+
+    g.setColour(
+        juce::Colour(18, 20, 22));
+
+    g.fillEllipse(
+        switchCX - 35.0f,
+        switchCY - 35.0f,
+        70.0f,
+        70.0f);
+
+    g.setColour(
+        juce::Colour(100, 103, 105));
+
+    g.drawEllipse(
+        switchCX - 34.0f,
+        switchCY - 34.0f,
+        68.0f,
+        68.0f,
+        1.5f);
+
+    //==============================================================
+    // ROUND METAL SWITCH CAP
+    //==============================================================
+
+    juce::ColourGradient capMetal(
+        juce::Colour(248, 249, 249),
+        switchCX - 12.0f,
+        switchCY - 28.0f,
+
+        juce::Colour(62, 65, 67),
+        switchCX + 14.0f,
+        switchCY + 30.0f,
+
+        true);
+
+    g.setGradientFill(
+        capMetal);
+
+    g.fillEllipse(
+        switchCX - 29.0f,
+        switchCY - 29.0f,
+        58.0f,
+        58.0f);
+
+    // Cap border
+
+    g.setColour(
+        juce::Colour(25, 27, 29));
+
+    g.drawEllipse(
+        switchCX - 29.0f,
+        switchCY - 29.0f,
+        58.0f,
+        58.0f,
         2.0f);
 
-    // 3PDT detail
-    g.setColour(juce::Colour(35, 37, 39));
+    //==============================================================
+    // METAL HIGHLIGHT
+    //==============================================================
 
-    g.fillEllipse(218.0f, 523.0f, 14.0f, 14.0f);
-    g.fillEllipse(243.0f, 523.0f, 14.0f, 14.0f);
-    g.fillEllipse(268.0f, 523.0f, 14.0f, 14.0f);
+    g.setColour(
+        juce::Colours::white
+            .withAlpha(0.65f));
 
-    // Status
-    g.setColour(juce::Colours::white);
+    g.drawArc(
+        switchCX - 22.0f,
+        switchCY - 22.0f,
+        44.0f,
+        44.0f,
+        3.7f,
+        5.6f,
+        2.5f);
+
+    // Lower reflection
+
+    g.setColour(
+        juce::Colour(255, 255, 255)
+            .withAlpha(0.12f));
+
+    g.drawArc(
+        switchCX - 23.0f,
+        switchCY - 23.0f,
+        46.0f,
+        46.0f,
+        0.3f,
+        2.4f,
+        2.0f);
+
+    //==============================================================
+    // CENTRE CONTACT
+    //==============================================================
+
+    g.setColour(
+        juce::Colour(25, 27, 29));
+
+    g.fillEllipse(
+        switchCX - 5.0f,
+        switchCY - 5.0f,
+        10.0f,
+        10.0f);
+
+    g.setColour(
+        juce::Colour(175, 178, 180));
+
+    g.fillEllipse(
+        switchCX - 2.5f,
+        switchCY - 2.5f,
+        5.0f,
+        5.0f);
+
+    //==============================================================
+    // STATUS
+    //==============================================================
+
+    g.setColour(
+        juce::Colours::white);
 
     g.setFont(
         juce::Font(
@@ -439,12 +735,20 @@ void RGBlueDelayAudioProcessorEditor::paint(
 
     g.drawFittedText(
         bypassed ? "BYPASS" : "ON",
-        juce::Rectangle<int>(350, 510, 80, 25),
+        juce::Rectangle<int>(
+            350,
+            510,
+            80,
+            25),
         juce::Justification::centred,
         1);
 
-    // Footer
-    g.setColour(juce::Colour(130, 140, 148));
+    //==============================================================
+    // FOOTER
+    //==============================================================
+
+    g.setColour(
+        juce::Colour(130, 140, 148));
 
     g.setFont(
         juce::Font(
@@ -453,31 +757,62 @@ void RGBlueDelayAudioProcessorEditor::paint(
 
     g.drawFittedText(
         "RG ELECTRONICS",
-        juce::Rectangle<int>(50, 605, 400, 18),
+        juce::Rectangle<int>(
+            50,
+            605,
+            400,
+            18),
         juce::Justification::centred,
         1);
 }
 
+//================================================================
+// RESIZED
+//================================================================
+
 void RGBlueDelayAudioProcessorEditor::resized()
 {
     delaySlider.setBounds(
-        45, 110, 180, 165);
+        45,
+        110,
+        180,
+        165);
 
     repeatSlider.setBounds(
-        275, 110, 180, 165);
+        275,
+        110,
+        180,
+        165);
 
     mixSlider.setBounds(
-        160, 295, 180, 165);
+        160,
+        295,
+        180,
+        165);
 
     delayLabel.setBounds(
-        70, 258, 130, 25);
+        70,
+        258,
+        130,
+        25);
 
     repeatLabel.setBounds(
-        300, 258, 130, 25);
+        300,
+        258,
+        130,
+        25);
 
     mixLabel.setBounds(
-        185, 442, 130, 25);
+        185,
+        442,
+        130,
+        25);
+
+    // Invisible clickable area for round footswitch
 
     footswitchButton.setBounds(
-        155, 480, 190, 105);
+        155,
+        480,
+        190,
+        105);
 }
