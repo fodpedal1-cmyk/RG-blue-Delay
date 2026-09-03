@@ -33,6 +33,8 @@ juce_add_plugin(RGBlueDelay
     COPY_PLUGIN_AFTER_BUILD TRUE
 )
 
+juce_generate_juce_header(RGBlueDelay)
+
 target_sources(RGBlueDelay
     PRIVATE
         Source/PluginProcessor.cpp
