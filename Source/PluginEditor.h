@@ -3,7 +3,9 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-class RGBlueDelayAudioProcessorEditor : public juce::AudioProcessorEditor
+class RGBlueDelayAudioProcessorEditor
+    : public juce::AudioProcessorEditor,
+      private juce::Timer
 {
 public:
     explicit RGBlueDelayAudioProcessorEditor(
@@ -47,6 +49,8 @@ private:
         juce::Slider& slider,
         juce::Label& label,
         const juce::String& text);
+
+    void timerCallback() override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(
         RGBlueDelayAudioProcessorEditor)
