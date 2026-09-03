@@ -5,19 +5,31 @@ project(RGBlueDelay VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_subdirectory(JUCE)
+include(FetchContent)
+
+FetchContent_Declare(
+    JUCE
+    GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+    GIT_TAG 8.0.8
+)
+
+FetchContent_MakeAvailable(JUCE)
 
 juce_add_plugin(RGBlueDelay
     COMPANY_NAME "RG Electronics"
     BUNDLE_ID "com.rgelectronics.rgbluedelay"
     PLUGIN_MANUFACTURER_CODE RGEL
     PLUGIN_CODE BODL
+
     FORMATS VST3
+
     PRODUCT_NAME "RG Blue Delay"
+
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
+
     COPY_PLUGIN_AFTER_BUILD TRUE
 )
 
